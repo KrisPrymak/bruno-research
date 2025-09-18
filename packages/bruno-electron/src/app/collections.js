@@ -1,3 +1,4 @@
+// ШАГ 6 Здесь происходит открытие коллекций
 const fs = require('fs');
 const path = require('path');
 const { dialog, ipcMain } = require('electron');
@@ -69,10 +70,12 @@ const openCollection = async (win, watcher, collectionPath, options = {}) => {
         brunoConfig.ignore = ['node_modules', '.git'];
       }
 
+      // ШАГ 7 Открываем коллекцию и получаем данные, размер, файлы
       const { size, filesCount } = await getCollectionStats(collectionPath);
       brunoConfig.size = size;
       brunoConfig.filesCount = filesCount;
 
+      // ШАГ 8 Отправляем данные в UI
       win.webContents.send('main:collection-opened', collectionPath, uid, brunoConfig);
       ipcMain.emit('main:collection-opened', win, collectionPath, uid, brunoConfig);
     } catch (err) {

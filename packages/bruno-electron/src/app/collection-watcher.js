@@ -275,7 +275,6 @@ const add = async (win, pathname, collectionUid, collectionPath, useWorkerThread
         file.size = sizeInMB(fileStats?.size);
         hydrateRequestWithUuid(file.data, pathname);
         win.webContents.send('main:collection-tree-updated', 'addFile', file);
-        
       } catch (error) {
         console.error(error);
       } finally {
@@ -315,7 +314,7 @@ const add = async (win, pathname, collectionUid, collectionPath, useWorkerThread
         hydrateRequestWithUuid(file.data, pathname);
         win.webContents.send('main:collection-tree-updated', 'addFile', file);
       }
-    } catch(error) {
+    } catch (error) {
       file.data = {
         name: path.basename(pathname),
         type: 'http-request'
@@ -352,8 +351,7 @@ const addDirectory = async (win, pathname, collectionUid, collectionPath) => {
       name = folderBruData?.meta?.name || name;
       seq = folderBruData?.meta?.seq;
     }
-  }
-  catch(error) {
+  } catch (error) {
     console.error('Error occured while parsing folder.bru file!');
     console.error(error);
   }
@@ -515,7 +513,6 @@ const unlinkDir = async (win, pathname, collectionUid, collectionPath) => {
     return;
   }
 
-
   const folderBruFilePath = path.join(pathname, `folder.bru`);
 
   let name = path.basename(pathname);
@@ -539,10 +536,10 @@ const unlinkDir = async (win, pathname, collectionUid, collectionPath) => {
 const onWatcherSetupComplete = (win, watchPath, collectionUid, watcher) => {
   // Mark discovery as complete
   watcher.completeCollectionDiscovery(win, collectionUid);
-  
+
   const UiStateSnapshotStore = new UiStateSnapshot();
   const collectionsSnapshotState = UiStateSnapshotStore.getCollections();
-  const collectionSnapshotState = collectionsSnapshotState?.find(c => c?.pathname == watchPath);
+  const collectionSnapshotState = collectionsSnapshotState?.find((c) => c?.pathname == watchPath);
   win.webContents.send('main:hydrate-app-with-ui-state-snapshot', collectionSnapshotState);
 };
 
@@ -557,8 +554,8 @@ class CollectionWatcher {
     if (!this.loadingStates[collectionUid]) {
       this.loadingStates[collectionUid] = {
         isDiscovering: false, // Initial discovery phase
-        isProcessing: false,  // Processing discovered files
-        pendingFiles: new Set(), // Files that need processing
+        isProcessing: false, // Processing discovered files
+        pendingFiles: new Set() // Files that need processing
       };
     }
   }
@@ -566,10 +563,10 @@ class CollectionWatcher {
   startCollectionDiscovery(win, collectionUid) {
     this.initializeLoadingState(collectionUid);
     const state = this.loadingStates[collectionUid];
-    
+
     state.isDiscovering = true;
     state.pendingFiles.clear();
-    
+
     win.webContents.send('main:collection-loading-state-updated', {
       collectionUid,
       isLoading: true
@@ -584,10 +581,10 @@ class CollectionWatcher {
 
   markFileAsProcessed(win, collectionUid, filepath) {
     if (!this.loadingStates[collectionUid]) return;
-    
+
     const state = this.loadingStates[collectionUid];
     state.pendingFiles.delete(filepath);
-    
+
     // If discovery is complete and no pending files, mark as not loading
     if (!state.isDiscovering && state.pendingFiles.size === 0 && state.isProcessing) {
       state.isProcessing = false;
@@ -600,10 +597,10 @@ class CollectionWatcher {
 
   completeCollectionDiscovery(win, collectionUid) {
     if (!this.loadingStates[collectionUid]) return;
-    
+
     const state = this.loadingStates[collectionUid];
     state.isDiscovering = false;
-    
+
     // If there are pending files, start processing phase
     if (state.pendingFiles.size > 0) {
       state.isProcessing = true;
@@ -626,11 +623,12 @@ class CollectionWatcher {
     }
 
     this.initializeLoadingState(collectionUid);
-    
+
     this.startCollectionDiscovery(win, collectionUid);
 
     const ignores = brunoConfig?.ignore || [];
     setTimeout(() => {
+      // ШАГ 9 Chokidar следит за изменениями в файловой системе
       const watcher = chokidar.watch(watchPath, {
         ignoreInitial: false,
         usePolling: isWSLPath(watchPath) || forcePolling ? true : false,
@@ -654,6 +652,7 @@ class CollectionWatcher {
 
       let startedNewWatcher = false;
       watcher
+        // ШАГ 10 События вотчера в chokidar
         .on('ready', () => onWatcherSetupComplete(win, watchPath, collectionUid, this))
         .on('add', (pathname) => add(win, pathname, collectionUid, watchPath, useWorkerThread, this))
         .on('addDir', (pathname) => addDirectory(win, pathname, collectionUid, watchPath))
@@ -695,7 +694,7 @@ class CollectionWatcher {
       this.watchers[watchPath].close();
       this.watchers[watchPath] = null;
     }
-    
+
     if (collectionUid) {
       this.cleanupLoadingState(collectionUid);
     }
@@ -704,7 +703,7 @@ class CollectionWatcher {
   getWatcherByItemPath(itemPath) {
     const paths = Object.keys(this.watchers);
 
-    const watcherPath = paths?.find(collectionPath => {
+    const watcherPath = paths?.find((collectionPath) => {
       const absCollectionPath = path.resolve(collectionPath);
       const absItemPath = path.resolve(itemPath);
 
@@ -720,7 +719,7 @@ class CollectionWatcher {
       watcher.unwatch(itemPath);
     }
   }
-  
+
   addItemPathInWatcher(itemPath) {
     const watcher = this.getWatcherByItemPath(itemPath);
     if (watcher && !watcher?.has?.(itemPath)) {

@@ -5,7 +5,7 @@ const fsExtra = require('fs-extra');
 const os = require('os');
 const path = require('path');
 const { ipcMain, shell, dialog, app } = require('electron');
-const { 
+const {
   parseRequest,
   stringifyRequest,
   parseRequestViaWorker,
@@ -46,14 +46,35 @@ const {
 const { openCollectionDialog } = require('../app/collections');
 const { generateUidBasedOnHash, stringifyJson, safeParseJSON, safeStringifyJSON } = require('../utils/common');
 const { moveRequestUid, deleteRequestUid } = require('../cache/requestUids');
-const { deleteCookiesForDomain, getDomainsWithCookies, addCookieForDomain, modifyCookieForDomain, parseCookieString, createCookieString, deleteCookie } = require('../utils/cookies');
+const {
+  deleteCookiesForDomain,
+  getDomainsWithCookies,
+  addCookieForDomain,
+  modifyCookieForDomain,
+  parseCookieString,
+  createCookieString,
+  deleteCookie
+} = require('../utils/cookies');
 const EnvironmentSecretsStore = require('../store/env-secrets');
 const CollectionSecurityStore = require('../store/collection-security');
 const UiStateSnapshotStore = require('../store/ui-state-snapshot');
 const interpolateVars = require('./network/interpolate-vars');
-const { getEnvVars, getTreePathFromCollectionToItem, mergeVars, parseBruFileMeta, hydrateRequestWithUuid, transformRequestToSaveToFilesystem } = require('../utils/collection');
+const {
+  getEnvVars,
+  getTreePathFromCollectionToItem,
+  mergeVars,
+  parseBruFileMeta,
+  hydrateRequestWithUuid,
+  transformRequestToSaveToFilesystem
+} = require('../utils/collection');
 const { getProcessEnvVars } = require('../store/process-env');
-const { getOAuth2TokenUsingAuthorizationCode, getOAuth2TokenUsingClientCredentials, getOAuth2TokenUsingPasswordCredentials, getOAuth2TokenUsingImplicitGrant, refreshOauth2Token } = require('../utils/oauth2');
+const {
+  getOAuth2TokenUsingAuthorizationCode,
+  getOAuth2TokenUsingClientCredentials,
+  getOAuth2TokenUsingPasswordCredentials,
+  getOAuth2TokenUsingImplicitGrant,
+  refreshOauth2Token
+} = require('../utils/oauth2');
 const { getCertsAndProxyConfig } = require('./network/cert-utils');
 const collectionWatcher = require('../app/collection-watcher');
 
@@ -88,7 +109,7 @@ const validatePathIsInsideCollection = (filePath, lastOpenedCollections) => {
   if (!isValid) {
     throw new Error(`Path: ${filePath} should be inside a collection`);
   }
-}
+};
 
 const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollections) => {
   // create collection
@@ -384,7 +405,6 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
   // rename item
   ipcMain.handle('renderer:rename-item-name', async (event, { itemPath, newName }) => {
     try {
-
       if (!fs.existsSync(itemPath)) {
         throw new Error(`path: ${itemPath} does not exist`);
       }
@@ -403,7 +423,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
             }
           };
         }
-        
+
         const folderBruFileContent = await stringifyFolder(folderBruFileJsonContent);
         await writeFile(folderBruFilePath, folderBruFileContent);
 
@@ -428,7 +448,8 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
   // rename item
   ipcMain.handle('renderer:rename-item-filename', async (event, { oldPath, newPath, newName, newFilename }) => {
     const tempDir = path.join(os.tmpdir(), `temp-folder-${Date.now()}`);
-    const isWindowsOSAndNotWSLPathAndItemHasSubDirectories = isDirectory(oldPath) && isWindowsOS() && !isWSLPath(oldPath) && hasSubDirectories(oldPath);
+    const isWindowsOSAndNotWSLPathAndItemHasSubDirectories =
+      isDirectory(oldPath) && isWindowsOS() && !isWSLPath(oldPath) && hasSubDirectories(oldPath);
     try {
       // Check if the old path exists
       if (!fs.existsSync(oldPath)) {
@@ -456,7 +477,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
 
         const folderBruFileContent = await stringifyFolder(folderBruFileJsonContent);
         await writeFile(folderBruFilePath, folderBruFileContent);
-        
+
         const bruFilesAtSource = await searchForBruFiles(oldPath);
 
         for (let bruFile of bruFilesAtSource) {
@@ -513,7 +534,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
             await fsExtra.copy(tempDir, oldPath);
             await fsExtra.remove(tempDir);
           } catch (err) {
-            console.error("Failed to restore data to the old path:", err);
+            console.error('Failed to restore data to the old path:', err);
           }
         }
       }
@@ -587,7 +608,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
 
   ipcMain.handle('renderer:update-collection-paths', async (_, collectionPaths) => {
     lastOpenedCollections.update(collectionPaths);
-  })
+  });
 
   ipcMain.handle('renderer:import-collection', async (event, collection, collectionLocation) => {
     try {
@@ -700,7 +721,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
       const parseCollectionItems = (items = [], currentPath) => {
         items.forEach(async (item) => {
           if (['http-request', 'graphql-request', 'grpc-request'].includes(item.type)) {
-            const content = await stringifyRequestViaWorker(item);            
+            const content = await stringifyRequestViaWorker(item);
             const filePath = path.join(currentPath, item.filename);
             safeWriteFileSync(filePath, content);
           }
@@ -804,7 +825,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
       if (fs.existsSync(targetDirname)) {
         const sourceDirname = path.dirname(sourcePathname);
         const pathnamesBefore = await getPaths(sourcePathname);
-        const pathnamesAfter = pathnamesBefore?.map(p => p?.replace(sourceDirname, targetDirname));
+        const pathnamesAfter = pathnamesBefore?.map((p) => p?.replace(sourceDirname, targetDirname));
         await copyPath(sourcePathname, targetDirname);
         await removePath(sourcePathname);
         // move the request uids of the previous file/folders to the new file/folder items
@@ -875,10 +896,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
 
   const updateCookiesAndNotify = async () => {
     const domainsWithCookies = await getDomainsWithCookies();
-    mainWindow.webContents.send(
-      'main:cookies-update',
-      safeParseJSON(safeStringifyJSON(domainsWithCookies))
-    );
+    mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookies)));
     cookiesStore.saveCookieJar();
   };
 
@@ -921,7 +939,7 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
     }
   });
 
-    ipcMain.handle('renderer:get-parsed-cookie', async (event, cookieStr) => {
+  ipcMain.handle('renderer:get-parsed-cookie', async (event, cookieStr) => {
     try {
       return parseCookieString(cookieStr);
     } catch (error) {
@@ -965,80 +983,88 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
 
   ipcMain.handle('renderer:fetch-oauth2-credentials', async (event, { itemUid, request, collection }) => {
     try {
-        if (request.oauth2) {
-          let requestCopy = _.cloneDeep(request);
-          const { uid: collectionUid, pathname: collectionPath, runtimeVariables, environments = [], activeEnvironmentUid } = collection;
-          const environment = _.find(environments, (e) => e.uid === activeEnvironmentUid);
-          const envVars = getEnvVars(environment);
-          const processEnvVars = getProcessEnvVars(collectionUid);
-          const partialItem = { uid: itemUid };
-          const requestTreePath = getTreePathFromCollectionToItem(collection, partialItem);
-          mergeVars(collection, requestCopy, requestTreePath);
+      if (request.oauth2) {
+        let requestCopy = _.cloneDeep(request);
+        const {
+          uid: collectionUid,
+          pathname: collectionPath,
+          runtimeVariables,
+          environments = [],
+          activeEnvironmentUid
+        } = collection;
+        const environment = _.find(environments, (e) => e.uid === activeEnvironmentUid);
+        const envVars = getEnvVars(environment);
+        const processEnvVars = getProcessEnvVars(collectionUid);
+        const partialItem = { uid: itemUid };
+        const requestTreePath = getTreePathFromCollectionToItem(collection, partialItem);
+        mergeVars(collection, requestCopy, requestTreePath);
 
-          interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
-          const certsAndProxyConfig = await getCertsAndProxyConfig({
-            collectionUid,
-            request: requestCopy,
-            envVars,
-            runtimeVariables,
-            processEnvVars,
-            collectionPath
-          });
-          const { oauth2: { grantType }} = requestCopy || {};
-          
-          const handleOAuth2Response = (response) => {
-            if (response.error && !response.debugInfo) {
-              throw new Error(response.error);
-            }
-            return response;
-          };
-          
-          switch (grantType) {
-            case 'authorization_code':
-              interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
-              return await getOAuth2TokenUsingAuthorizationCode({ 
-                request: requestCopy, 
-                collectionUid, 
-                forceFetch: true, 
-                certsAndProxyConfig 
-              }).then(handleOAuth2Response);
-              
-            case 'client_credentials':
-              interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
-              return await getOAuth2TokenUsingClientCredentials({ 
-                request: requestCopy, 
-                collectionUid, 
-                forceFetch: true, 
-                certsAndProxyConfig 
-              }).then(handleOAuth2Response);
-              
-            case 'password':
-              interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
-              return await getOAuth2TokenUsingPasswordCredentials({ 
-                request: requestCopy, 
-                collectionUid, 
-                forceFetch: true, 
-                certsAndProxyConfig 
-              }).then(handleOAuth2Response);
-              
-            case 'implicit':
-              interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
-              return await getOAuth2TokenUsingImplicitGrant({ 
-                request: requestCopy, 
-                collectionUid, 
-                forceFetch: true 
-              }).then(handleOAuth2Response);
-              
-            default:
-              return {
-                error: `Unsupported grant type: ${grantType}`,
-                credentials: null,
-                url: null,
-                collectionUid,
-                credentialsId: null
-              };
+        interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
+        const certsAndProxyConfig = await getCertsAndProxyConfig({
+          collectionUid,
+          request: requestCopy,
+          envVars,
+          runtimeVariables,
+          processEnvVars,
+          collectionPath
+        });
+        const {
+          oauth2: { grantType }
+        } = requestCopy || {};
+
+        const handleOAuth2Response = (response) => {
+          if (response.error && !response.debugInfo) {
+            throw new Error(response.error);
           }
+          return response;
+        };
+
+        switch (grantType) {
+          case 'authorization_code':
+            interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
+            return await getOAuth2TokenUsingAuthorizationCode({
+              request: requestCopy,
+              collectionUid,
+              forceFetch: true,
+              certsAndProxyConfig
+            }).then(handleOAuth2Response);
+
+          case 'client_credentials':
+            interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
+            return await getOAuth2TokenUsingClientCredentials({
+              request: requestCopy,
+              collectionUid,
+              forceFetch: true,
+              certsAndProxyConfig
+            }).then(handleOAuth2Response);
+
+          case 'password':
+            interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
+            return await getOAuth2TokenUsingPasswordCredentials({
+              request: requestCopy,
+              collectionUid,
+              forceFetch: true,
+              certsAndProxyConfig
+            }).then(handleOAuth2Response);
+
+          case 'implicit':
+            interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
+            return await getOAuth2TokenUsingImplicitGrant({
+              request: requestCopy,
+              collectionUid,
+              forceFetch: true
+            }).then(handleOAuth2Response);
+
+          default:
+            return {
+              error: `Unsupported grant type: ${grantType}`,
+              credentials: null,
+              url: null,
+              collectionUid,
+              credentialsId: null
+            };
         }
+      }
     } catch (error) {
       return Promise.reject(error);
     }
@@ -1096,34 +1122,44 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
 
   ipcMain.handle('renderer:refresh-oauth2-credentials', async (event, { itemUid, request, collection }) => {
     try {
-        if (request.oauth2) {
-          let requestCopy = _.cloneDeep(request);
-          const { uid: collectionUid, pathname: collectionPath, runtimeVariables, environments = [], activeEnvironmentUid } = collection;
-          const environment = _.find(environments, (e) => e.uid === activeEnvironmentUid);
-          const envVars = getEnvVars(environment);
-          const processEnvVars = getProcessEnvVars(collectionUid);
-          const partialItem = { uid: itemUid };
-          const requestTreePath = getTreePathFromCollectionToItem(collection, partialItem);
-          mergeVars(collection, requestCopy, requestTreePath);
-          interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
+      if (request.oauth2) {
+        let requestCopy = _.cloneDeep(request);
+        const {
+          uid: collectionUid,
+          pathname: collectionPath,
+          runtimeVariables,
+          environments = [],
+          activeEnvironmentUid
+        } = collection;
+        const environment = _.find(environments, (e) => e.uid === activeEnvironmentUid);
+        const envVars = getEnvVars(environment);
+        const processEnvVars = getProcessEnvVars(collectionUid);
+        const partialItem = { uid: itemUid };
+        const requestTreePath = getTreePathFromCollectionToItem(collection, partialItem);
+        mergeVars(collection, requestCopy, requestTreePath);
+        interpolateVars(requestCopy, envVars, runtimeVariables, processEnvVars);
 
-          const certsAndProxyConfig = await getCertsAndProxyConfig({
-            collectionUid,
-            request: requestCopy,
-            envVars,
-            runtimeVariables,
-            processEnvVars,
-            collectionPath
-          });
-          
-          let { credentials, url, credentialsId, debugInfo } = await refreshOauth2Token({ requestCopy, collectionUid, certsAndProxyConfig });
-          return { credentials, url, collectionUid, credentialsId, debugInfo };
-        }
+        const certsAndProxyConfig = await getCertsAndProxyConfig({
+          collectionUid,
+          request: requestCopy,
+          envVars,
+          runtimeVariables,
+          processEnvVars,
+          collectionPath
+        });
+
+        let { credentials, url, credentialsId, debugInfo } = await refreshOauth2Token({
+          requestCopy,
+          collectionUid,
+          certsAndProxyConfig
+        });
+        return { credentials, url, collectionUid, credentialsId, debugInfo };
+      }
     } catch (error) {
       return Promise.reject(error);
     }
   });
-  
+
   // todo: could be removed
   ipcMain.handle('renderer:load-request', async (event, { collectionUid, pathname }) => {
     let fileStats;
@@ -1225,16 +1261,13 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
   });
 
   ipcMain.handle('renderer:mount-collection', async (event, { collectionUid, collectionPathname, brunoConfig }) => {
-    const {
-      size,
-      filesCount,
-      maxFileSize
-    } = await getCollectionStats(collectionPathname);
+    const { size, filesCount, maxFileSize } = await getCollectionStats(collectionPathname);
 
+    // ШАГ 11 Проверяем размер коллекции и файлов и если надо делаем асинхронную загрузку
     const shouldLoadCollectionAsync =
-      (size > MAX_COLLECTION_SIZE_IN_MB) ||
-      (filesCount > MAX_COLLECTION_FILES_COUNT) ||
-      (maxFileSize > MAX_SINGLE_FILE_SIZE_IN_COLLECTION_IN_MB);
+      size > MAX_COLLECTION_SIZE_IN_MB ||
+      filesCount > MAX_COLLECTION_FILES_COUNT ||
+      maxFileSize > MAX_SINGLE_FILE_SIZE_IN_COLLECTION_IN_MB;
 
     watcher.addWatcher(mainWindow, collectionPathname, collectionUid, brunoConfig, false, shouldLoadCollectionAsync);
   });
@@ -1255,8 +1288,8 @@ const registerRendererEventHandlers = (mainWindow, watcher, lastOpenedCollection
   ipcMain.handle('renderer:convert-postman-to-bruno', async (event, postmanCollection) => {
     try {
       // Convert Postman collection to Bruno format
-      const brunoCollection = await postmanToBruno(postmanCollection, { useWorkers: true});
-      
+      const brunoCollection = await postmanToBruno(postmanCollection, { useWorkers: true });
+
       return brunoCollection;
     } catch (error) {
       console.error('Error converting Postman to Bruno:', error);

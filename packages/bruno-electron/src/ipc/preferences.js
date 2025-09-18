@@ -1,3 +1,4 @@
+// ШАГ 4 Здесь происходит восстановление коллекций
 const { ipcMain } = require('electron');
 const { getPreferences, savePreferences, preferencesUtil } = require('../store/preferences');
 const { isDirectory } = require('../utils/filesystem');
@@ -19,14 +20,16 @@ const registerPreferencesIpc = (mainWindow, watcher, lastOpenedCollections) => {
       // load global environments
       const globalEnvironments = globalEnvironmentsStore.getGlobalEnvironments();
       let activeGlobalEnvironmentUid = globalEnvironmentsStore.getActiveGlobalEnvironmentUid();
-      activeGlobalEnvironmentUid = globalEnvironments?.find(env => env?.uid == activeGlobalEnvironmentUid) ? activeGlobalEnvironmentUid : null;
+      activeGlobalEnvironmentUid = globalEnvironments?.find((env) => env?.uid == activeGlobalEnvironmentUid)
+        ? activeGlobalEnvironmentUid
+        : null;
       mainWindow.webContents.send('main:load-global-environments', { globalEnvironments, activeGlobalEnvironmentUid });
-    }
-    catch(error) {
-      console.error("Error occured while fetching global environements!");
+    } catch (error) {
+      console.error('Error occured while fetching global environements!');
       console.error(error);
     }
 
+    // ШАГ 5 Последние открытые коллекции при старте
     // reload last opened collections
     const lastOpened = lastOpenedCollections.getAll();
 

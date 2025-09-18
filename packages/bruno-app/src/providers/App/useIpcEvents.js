@@ -19,12 +19,23 @@ import {
   runRequestEvent,
   scriptEnvironmentUpdateEvent
 } from 'providers/ReduxStore/slices/collections';
-import { collectionAddEnvFileEvent, openCollectionEvent, hydrateCollectionWithUiStateSnapshot, mergeAndPersistEnvironment } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  collectionAddEnvFileEvent,
+  openCollectionEvent,
+  hydrateCollectionWithUiStateSnapshot,
+  mergeAndPersistEnvironment
+} from 'providers/ReduxStore/slices/collections/actions';
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
 import { isElectron } from 'utils/common/platform';
-import { globalEnvironmentsUpdateEvent, updateGlobalEnvironments } from 'providers/ReduxStore/slices/global-environments';
-import { collectionAddOauth2CredentialsByUrl, updateCollectionLoadingState } from 'providers/ReduxStore/slices/collections/index';
+import {
+  globalEnvironmentsUpdateEvent,
+  updateGlobalEnvironments
+} from 'providers/ReduxStore/slices/global-environments';
+import {
+  collectionAddOauth2CredentialsByUrl,
+  updateCollectionLoadingState
+} from 'providers/ReduxStore/slices/collections/index';
 import { addLog } from 'providers/ReduxStore/slices/logs';
 
 const useIpcEvents = () => {
@@ -37,6 +48,7 @@ const useIpcEvents = () => {
 
     const { ipcRenderer } = window;
 
+    // ШАГ 15 Подписка UI и обновление Редакса
     const _collectionTreeUpdated = (type, val) => {
       if (window.__IS_DEV__) {
         console.log(type);
@@ -89,8 +101,10 @@ const useIpcEvents = () => {
 
     ipcRenderer.invoke('renderer:ready');
 
+    // ШАГ 12 Передаем данные в UI что дерево изменилось
     const removeCollectionTreeUpdateListener = ipcRenderer.on('main:collection-tree-updated', _collectionTreeUpdated);
 
+    // ШАГ 13 Передаем данные в UI что коллекция открыта
     const removeOpenCollectionListener = ipcRenderer.on('main:collection-opened', (pathname, uid, brunoConfig) => {
       dispatch(openCollectionEvent(uid, pathname, brunoConfig));
     });
@@ -116,9 +130,12 @@ const useIpcEvents = () => {
       dispatch(mergeAndPersistEnvironment(val));
     });
 
-    const removeGlobalEnvironmentVariablesUpdateListener = ipcRenderer.on('main:global-environment-variables-update', (val) => {
-      dispatch(globalEnvironmentsUpdateEvent(val));
-    });
+    const removeGlobalEnvironmentVariablesUpdateListener = ipcRenderer.on(
+      'main:global-environment-variables-update',
+      (val) => {
+        dispatch(globalEnvironmentsUpdateEvent(val));
+      }
+    );
 
     const removeCollectionRenamedListener = ipcRenderer.on('main:collection-renamed', (val) => {
       dispatch(collectionRenamedEvent(val));
@@ -136,13 +153,15 @@ const useIpcEvents = () => {
       dispatch(processEnvUpdateEvent(val));
     });
 
-    const removeConsoleLogListener = ipcRenderer.on('main:console-log', (val) => { 
-      console[val.type](...val.args);    
-      dispatch(addLog({
-        type: val.type,
-        args: val.args,
-        timestamp: new Date().toISOString()
-      }));
+    const removeConsoleLogListener = ipcRenderer.on('main:console-log', (val) => {
+      console[val.type](...val.args);
+      dispatch(
+        addLog({
+          type: val.type,
+          args: val.args,
+          timestamp: new Date().toISOString()
+        })
+      );
     });
 
     const removeConfigUpdatesListener = ipcRenderer.on('main:bruno-config-update', (val) =>
@@ -183,6 +202,7 @@ const useIpcEvents = () => {
       dispatch(collectionAddOauth2CredentialsByUrl(payload));
     });
 
+    // ШАГ 14 Передаем данные в UI что коллекция загружается
     const removeCollectionLoadingStateListener = ipcRenderer.on('main:collection-loading-state-updated', (val) => {
       dispatch(updateCollectionLoadingState(val));
     });

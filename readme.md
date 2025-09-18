@@ -1,3 +1,8 @@
+# Как просмотреть комменты
+
+Для просмотра основной логики введите в поиск по проекту "// ШАГ"
+Следуйте комментам от "// ШАГ 1" до "// ШАГ 15"
+
 <br />
 <img src="assets/images/logo-transparent.png" width="80"/>
 
@@ -52,6 +57,7 @@ We strive to strike a harmonious balance between [open-source principles and sus
 You can explore our [paid versions](https://www.usebruno.com/pricing) to see if there are additional features that you or your team may find useful! <br/>
 
 ## Table of Contents
+
 - [Installation](#installation)
 - [Features](#features)
   - [Run across multiple platforms 🖥️](#run-across-multiple-platforms-%EF%B8%8F)
